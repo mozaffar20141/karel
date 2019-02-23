@@ -224,16 +224,6 @@ class ParserNegativeTest {
     }
 
     @Test
-    fun statementAsCondition() {
-        assertDiagnostic("illegal start of condition", """
-        void main() {
-            if (turnAround()) {
-            }
-        }
-        """)
-    }
-
-    @Test
     fun conditionMissingParens() {
         assertDiagnostic("expected (", """
         void main() {

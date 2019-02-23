@@ -22,11 +22,7 @@ fun Parser.primaryCondition(): Condition = when (current) {
     FALSE -> False(accept())
     TRUE -> True(accept())
 
-    ON_BEEPER -> OnBeeper(accept().emptyParens())
-    BEEPER_AHEAD -> BeeperAhead(accept().emptyParens())
-    LEFT_IS_CLEAR -> LeftIsClear(accept().emptyParens())
-    FRONT_IS_CLEAR -> FrontIsClear(accept().emptyParens())
-    RIGHT_IS_CLEAR -> RightIsClear(accept().emptyParens())
+    IDENTIFIER -> Query(accept().emptyParens())
 
     BANG -> Not(accept(), primaryCondition())
 

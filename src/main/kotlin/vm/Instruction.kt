@@ -103,6 +103,13 @@ val builtinCommands = mapOf(
         "pickBeeper" to PICK_BEEPER,
         "dropBeeper" to DROP_BEEPER)
 
+val builtinQueries = mapOf(
+        "onBeeper" to ON_BEEPER,
+        "beeperAhead" to BEEPER_AHEAD,
+        "leftIsClear" to LEFT_IS_CLEAR,
+        "frontIsClear" to FRONT_IS_CLEAR,
+        "rightIsClear" to RIGHT_IS_CLEAR)
+
 private val basicGoalInstructions = Array(XOR + 1) { Instruction(it, 0) }
 
 fun createInstructionBuffer(): MutableList<Instruction> {

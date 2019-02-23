@@ -142,15 +142,4 @@ class LexerTest {
         assertToken(VOID)
         assertToken(WHILE)
     }
-
-    @Test
-    fun predicates() {
-        lexer = Lexer("onBeeper beeperAhead leftIsClear frontIsClear rightIsClear")
-
-        assertToken(ON_BEEPER)
-        assertToken(BEEPER_AHEAD)
-        assertToken(LEFT_IS_CLEAR)
-        assertToken(FRONT_IS_CLEAR)
-        assertToken(RIGHT_IS_CLEAR)
-    }
 }

@@ -107,8 +107,7 @@ class CodeGenerator(private val semantics: KarelSemantics) {
                 generateInstruction(LOOP or back, body.closingBrace)
             }
             is Call -> {
-                val builtin = builtinCommands[target.lexeme]
-                val bytecode = builtin ?: CALL or id(target.lexeme)
+                val bytecode = builtinCommands.getOrElse(target.lexeme) { CALL or id(target.lexeme) }
                 generateInstruction(bytecode, target)
             }
         }
@@ -119,11 +118,12 @@ class CodeGenerator(private val semantics: KarelSemantics) {
             is False -> generateInstruction(PUSH or 0, fa1se)
             is True -> generateInstruction(PUSH or 1, tru3)
 
-            is OnBeeper -> generateInstruction(ON_BEEPER, onBeeper)
-            is BeeperAhead -> generateInstruction(BEEPER_AHEAD, beeperAhead)
-            is LeftIsClear -> generateInstruction(LEFT_IS_CLEAR, leftIsClear)
-            is FrontIsClear -> generateInstruction(FRONT_IS_CLEAR, frontIsClear)
-            is RightIsClear -> generateInstruction(RIGHT_IS_CLEAR, rightIsClear)
+            is Query -> {
+                val bytecode = vm.builtinQueries.getOrElse(query.lexeme) {
+                    throw Diagnostic(query.position, "undefined query ${query.lexeme}");
+                }
+                generateInstruction(bytecode, query)
+            }
 
             is Not -> {
                 p.generate()
