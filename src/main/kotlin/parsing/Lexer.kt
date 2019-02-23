@@ -1,6 +1,7 @@
 package parsing
 
-const val GOLDEN_RATIO = -7046029254386353131
+const val HASH_MIXER = -9008037146329382912L
+const val HASH_SHIFT = Long.SIZE_BITS - 4
 
 class Lexer(input: String) : LexerBase(input) {
 
@@ -79,54 +80,52 @@ class Lexer(input: String) : LexerBase(input) {
             '_' -> identifierOrKeyword(letters shl 5 or (current.toLong() and 31), cases shl 2 or (current.toInt() and 96))
 
             else -> {
-                val hash = (letters * GOLDEN_RATIO ushr 60).toInt()
-                // System.out.printf("%3d -> when (letters) { %dL -> if (cases == %d) return pooled(%s) }%n",
-                //         hash, letters, cases, lexeme().toUpperCase())
-                // return binarySearch(lexeme())
+                val hash = (letters * HASH_MIXER ushr HASH_SHIFT).toInt()
                 when (hash) {
-                    0 -> when (letters) {
-                        658907229700101170L -> if (cases == 536731616) return pooled(RIGHT_IS_CLEAR)
-                    }
-                    1 -> when (letters) {
-                        24388997L -> if (cases == 32736) return pooled(WHILE)
-                    }
-                    3 -> when (letters) {
-                        236982836680594482L -> if (cases == 536731616) return pooled(FRONT_IS_CLEAR)
-                    }
-                    6 -> when (letters) {
-                        530500993202L -> if (cases == 2064352) return pooled(ON_BEEPER)
-                        609752116L -> if (cases == 131040) return pooled(REPEAT)
-                    }
-                    9 -> when (letters) {
-                        2433774962086948L -> if (cases == 134209504) return pooled(BEEPER_AHEAD)
-                    }
-                    10 -> when (letters) {
-                        6337125L -> if (cases == 32736) return pooled(FALSE)
-                    }
-                    11 -> when (letters) {
-                        294L -> if (cases == 480) return pooled(IF)
-                        736548L -> if (cases == 8160) return pooled(VOID)
-                    }
-                    12 -> when (letters) {
-                        674469L -> if (cases == 8160) return pooled(TRUE)
-                    }
-                    14 -> when (letters) {
-                        13694015311844402L -> if (cases == 134078432) return pooled(LEFT_IS_CLEAR)
-                    }
-                    15 -> when (letters) {
-                        176741L -> if (cases == 8160) return pooled(ELSE)
-                    }
+                    8 -> if (letters == 2433774962086948L && cases == 134209504) return pooled(BEEPER_AHEAD)
+                    10 -> if (letters == 176741L && cases == 8160) return pooled(ELSE)
+                    13 -> if (letters == 6337125L && cases == 32736) return pooled(FALSE)
+                    11 -> if (letters == 236982836680594482L && cases == 536731616) return pooled(FRONT_IS_CLEAR)
+                    6 -> if (letters == 294L && cases == 480) return pooled(IF)
+                    3 -> if (letters == 13694015311844402L && cases == 134078432) return pooled(LEFT_IS_CLEAR)
+                    0 -> if (letters == 530500993202L && cases == 2064352) return pooled(ON_BEEPER)
+                    5 -> if (letters == 609752116L && cases == 131040) return pooled(REPEAT)
+                    2 -> if (letters == 658907229700101170L && cases == 536731616) return pooled(RIGHT_IS_CLEAR)
+                    12 -> if (letters == 674469L && cases == 8160) return pooled(TRUE)
+                    15 -> if (letters == 736548L && cases == 8160) return pooled(VOID)
+                    4 -> if (letters == 24388997L && cases == 32736) return pooled(WHILE)
                 }
                 token(IDENTIFIER, lexeme().intern())
             }
         }
     }
+}
 
-    fun binarySearch(lexeme: String): Token {
-        val keyword = lexemePool.binarySearch(lexeme, 0, NUM_KEYWORDS)
-        return when {
-            keyword >= 0 -> pooled(keyword.toByte())
-            else -> token(IDENTIFIER, lexeme.intern())
+// determine the perfect hash mixer by trying out the mantissa of a million square roots
+fun main() {
+    radicand@
+    for (radicand in 2..1_000_000) {
+        val mixer = java.lang.Double.doubleToLongBits(Math.sqrt(radicand.toDouble())) shl 12
+        var used = 0L
+        for (keyword in lexemePool.take(NUM_KEYWORDS)) {
+            val (_, _, hash) = lettersCasesHash(keyword, mixer)
+            val bitmask = 1L shl hash
+            if ((used and bitmask) != 0L) continue@radicand
+            used = used or bitmask
         }
+        println("const val HASH_MIXER = ${mixer}L")
+        for (keyword in lexemePool.take(NUM_KEYWORDS)) {
+            val (letters, cases, hash) = lettersCasesHash(keyword, mixer)
+            System.out.printf("%d -> if (letters == %dL && cases == %d) return pooled(%s)%n",
+                    hash, letters, cases, keyword.toUpperCase())
+        }
+        break@radicand
     }
+}
+
+private fun lettersCasesHash(keyword: String, mixer: Long): Triple<Long, Int, Int> {
+    val letters = keyword.fold(0L) { temp, ch -> temp shl 5 or (ch.toLong() and 31L) }
+    val cases = keyword.fold(0) { temp, ch -> temp shl 2 or (ch.toInt() and 96) }
+    val hash = (letters * mixer ushr HASH_SHIFT).toInt()
+    return Triple(letters, cases, hash)
 }
